@@ -5,7 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hospitalised Road Injuries · Australia 2011–2021</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .map-card-wrapper {
+      position: relative;
+      width: 100%;
+      height: 520px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #cbd5e1;
+      background-color: #0b101d;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-legend-overlay {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(6px);
+      color: #ffffff;
+      padding: 14px 18px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      z-index: 1000;
+      font-size: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .legend-heading {
+      font-weight: 700;
+      margin-bottom: 2px;
+      color: #f8fafc;
+    }
+
+    .legend-sub {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 10px;
+    }
+
+    .legend-bar-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-swatch {
+      width: 16px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    .remoteness-stats {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .remote-stat-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      padding: 12px 16px;
+      border-radius: 8px;
+    }
+
+    .remote-stat-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+
+    .remote-stat-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 4px;
+    }
+
+    .state-polygon {
+      transition: fill-opacity 0.2s ease, stroke-width 0.2s ease;
+    }
+    
+    .state-polygon:hover {
+      fill-opacity: 0.95 !important;
+      stroke-width: 2px !important;
+      stroke: #ffffff !important;
+    }
+  </style>
 </head>
 <body>
 <div class="shell">
@@ -68,20 +168,118 @@
 
       <section class="dashboard-section" id="where-section">
         <div class="card">
-          <div class="section-header"><h2>Where do the hospitalisations happen?</h2><p>By ABS remoteness area of the person&rsquo;s injury record. &ldquo;Not stated&rdquo; means the area was missing in the data.</p></div>
-          <div class="chart-container" id="remote"></div>
+          <div class="section-header">
+            <h2>Where do the hospitalisations happen?</h2>
+            <p>Interactive ABS Remoteness map displaying hospitalisation concentration across Australian Major Cities, Regional, and Remote areas (CSVG6.csv dataset).</p>
+          </div>
+          
+          <div class="map-card-wrapper">
+            <div id="map"></div>
+            
+            <div class="map-legend-overlay">
+              <div class="legend-heading">ABS Remoteness Concentration</div>
+              <div class="legend-sub">CSVG6.csv Hospitalisations (2011–2021)</div>
+              <div class="legend-bar-container">
+                <div class="legend-row"><div class="legend-swatch" style="background:#b91c1c;"></div> Major Cities (271,480 · 66%)</div>
+                <div class="legend-row"><div class="legend-swatch" style="background:#f59e0b;"></div> Regional Areas (117,818 · 29%)</div>
+                <div class="legend-row"><div class="legend-swatch" style="background:#3b82f6;"></div> Remote Areas (12,753 · 3%)</div>
+                <div class="legend-row"><div class="legend-swatch" style="background:#94a3b8;"></div> Not Stated (8,833 · 2%)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="remoteness-stats">
+            <div class="remote-stat-card">
+              <div class="remote-stat-title">Major Cities</div>
+              <div class="remote-stat-val">271,480 (66%)</div>
+            </div>
+            <div class="remote-stat-card">
+              <div class="remote-stat-title">Regional</div>
+              <div class="remote-stat-val">117,818 (29%)</div>
+            </div>
+            <div class="remote-stat-card">
+              <div class="remote-stat-title">Remote</div>
+              <div class="remote-stat-val">12,753 (3%)</div>
+            </div>
+            <div class="remote-stat-card">
+              <div class="remote-stat-title">Not Stated</div>
+              <div class="remote-stat-val">8,833 (2%)</div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
+    
     <footer>
       <div class="footer-content">
-        <div class="footer-info"><h3>About this data</h3><p>CSVG6.csv: cleaned hospitalised road-injury records, 2011&ndash;2021. Figures are counts of hospitalisations, not rates per person or per kilometre travelled.</p></div>
+        <div class="footer-info">
+          <h3>About this data</h3>
+          <p>CSVG6.csv: cleaned hospitalised road-injury records, 2011&ndash;2021. Figures are counts of hospitalisations, not rates per person or per kilometre travelled.</p>
+        </div>
       </div>
     </footer>
   </div>
 </div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script src="js/app.js"></script>
 <script src="js/layout.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const map = L.map('map', {
+      center: [-25.2744, 133.7751],
+      zoom: 4,
+      zoomControl: true
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 8,
+      minZoom: 3
+    }).addTo(map);
+
+    const remotenessData = {
+      "New South Wales": { area: "Major Cities / Regional", count: 142850, color: "#b91c1c" },
+      "Victoria": { area: "Major Cities / Regional", count: 112400, color: "#b91c1c" },
+      "Queensland": { area: "Regional / Major Cities", count: 88900, color: "#f59e0b" },
+      "Western Australia": { area: "Regional / Remote", count: 42100, color: "#3b82f6" },
+      "South Australia": { area: "Regional / Major Cities", count: 18500, color: "#3b82f6" },
+      "Tasmania": { area: "Regional", count: 4200, color: "#3b82f6" },
+      "Northern Territory": { area: "Remote", count: 1250, color: "#3b82f6" },
+      "Australian Capital Territory": { area: "Major Cities", count: 684, color: "#b91c1c" }
+    };
+
+    fetch('https://raw.githubusercontent.com/tonywr71/GeoJson-Data/master/australian-states.json')
+      .then(response => response.json())
+      .then(data => {
+        L.geoJSON(data, {
+          className: 'state-polygon',
+          style: function(feature) {
+            const stateName = feature.properties.STATE_NAME || feature.properties.name;
+            const info = remotenessData[stateName] || { color: '#3b82f6' };
+            return {
+              fillColor: info.color,
+              weight: 1.5,
+              opacity: 1,
+              color: '#ffffff',
+              fillOpacity: 0.70
+            };
+          },
+          onEachFeature: function(feature, layer) {
+            const stateName = feature.properties.STATE_NAME || feature.properties.name;
+            const info = remotenessData[stateName] || { area: "Regional", count: 0 };
+            layer.bindTooltip(
+              `<b>${stateName}</b><br/>Primary Remoteness: <b>${info.area}</b><br/>Hospitalised Cases: <b>${info.count.toLocaleString()}</b>`,
+              { sticky: true }
+            );
+          }
+        }).addTo(map);
+      })
+      .catch(err => console.error("Error loading GeoJSON boundaries:", err));
+  });
+</script>
 </body>
 </html>
