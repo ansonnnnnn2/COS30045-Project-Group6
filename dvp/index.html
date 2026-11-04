@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospitalised Road Injuries · Australia 2011–2021</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="rail">
+    <div class="rail-brand">
+      <span class="rail-kicker">Australia &middot; 2011&ndash;2021</span>
+      <h1>Hospitalised Road Injuries</h1>
+      <p>Who is hurt on our roads, and how has it changed?</p>
+    </div>
+    <nav class="header-nav" aria-label="Chapters">
+      <button class="nav-btn active" data-section="overview">Overview</button>
+      <button class="nav-btn" data-section="time">Over time</button>
+      <button class="nav-btn" data-section="who">Who is affected</button>
+      <button class="nav-btn" data-section="where">Where</button>
+    </nav>
+    <div class="status-card">
+      <div class="status"><span id="statusIndicator" class="status-indicator loading"></span><span id="statusText">Loading data&hellip;</span></div>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="container">
+      <div class="filters">
+        <div class="controls" id="controls" aria-label="Filters"></div>
+        <button id="reset" class="refresh-btn" type="button">Reset filters</button>
+        <p class="hint">These choices change every chart. You can also click a bar or a year to filter.</p>
+      </div>
+
+      <section class="dashboard-section" id="overview-section">
+        <div class="card overview">
+          <div class="section-header"><h2>How many people were hospitalised?</h2><p>Figures for the current selection of filters.</p></div>
+          <div class="statgrid" id="kpis"></div>
+        </div>
+        <div class="card overview">
+          <div class="section-header"><h2>Key findings</h2><p>These sentences update as you change the filters.</p></div>
+          <div class="story-grid" id="findings"></div>
+        </div>
+      </section>
+
+      <section class="dashboard-section" id="time-section">
+        <div class="card">
+          <div class="section-header"><h2>Did hospitalisations change between 2011 and 2021?</h2><p>Hospitalisations per year. 2020, the first COVID-19 year, is marked in amber.</p></div>
+          <div class="chart-container" id="trend"></div>
+        </div>
+        <div class="card">
+          <div class="section-header"><h2>What happened in 2020?</h2><p>Each month of 2020 compared with the average for the same month in 2017&ndash;2019.</p></div>
+          <div class="chart-container" id="months"></div>
+        </div>
+      </section>
+
+      <section class="dashboard-section" id="who-section">
+        <div class="card">
+          <div class="section-header"><h2>Which road users are hospitalised most?</h2><p>Ranked by number of hospitalisations. Click a bar to focus on that group.</p></div>
+          <div class="chart-container" id="users"></div>
+        </div>
+        <div class="card">
+          <div class="section-header"><h2>Which age groups are affected?</h2><p>Hospitalisations by age group.</p></div>
+          <div class="chart-container" id="ages"></div>
+        </div>
+      </section>
+
+      <section class="dashboard-section" id="where-section">
+        <div class="card">
+          <div class="section-header"><h2>Where do the hospitalisations happen?</h2><p>By ABS remoteness area of the person&rsquo;s injury record. &ldquo;Not stated&rdquo; means the area was missing in the data.</p></div>
+          <div class="chart-container" id="remote"></div>
+        </div>
+      </section>
+    </div>
+    <footer>
+      <div class="footer-content">
+        <div class="footer-info"><h3>About this data</h3><p>CSVG6.csv: cleaned hospitalised road-injury records, 2011&ndash;2021. Figures are counts of hospitalisations, not rates per person or per kilometre travelled.</p></div>
+      </div>
+    </footer>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="js/app.js"></script>
+<script src="js/layout.js"></script>
+</body>
+</html>
