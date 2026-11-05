@@ -1,7 +1,7 @@
 // app.js - Hospitalised road injuries dashboard (D3). Reads data/CSVG6.csv.
 (() => {
-const C = { ink: '#1B2333', muted: '#5B6578', rule: '#DDE3EE', navy: '#2A4A8D', amber: '#B8651B', grey: '#9AA5B1' };
-const SHADES = ['#1B2559', '#2A4A8D', '#3F7FC1', '#5AA9E6', '#7FBFF2'];
+const C = { ink: '#193247', muted: '#526878', rule: '#C9DDE0', navy: '#167D8D', amber: '#D7732B', grey: '#92A6AE' };
+const SHADES = ['#142D4E', '#166A78', '#2296A1', '#56B4AE', '#9AD7C9'];
 const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const ABB = MON.map(m => m.slice(0, 3));
 const AGES = ['0-7','8-16','17-25','26-39','40-64','65-74','75+','Missing'];
@@ -42,7 +42,7 @@ function buildFilters() {
   const present = k => new Set(rows.map(r => r[k]));
   const byUser = d3.rollups(rows, total, r => r.user).sort((a, b) => b[1] - a[1]).map(d => d[0]);
   const all = {
-    year: d3.range(2021, 2010, -1), remote: ['Major Cities', 'Regional', 'Remote', 'Missing'], user: byUser,
+    year: [...new Set(rows.map(r => r.year))].sort((a,b) => b-a), remote: ['Major Cities', 'Regional', 'Remote', 'Missing'], user: byUser,
     sex: ['Male', 'Female', 'intersex or indeterminate or missing'], age: AGES
   };
   $('#controls').innerHTML = KEYS.map(k => {
@@ -67,23 +67,6 @@ function kpis() {
     ['Male share', pct(male / T), 'of hospitalisations', '']
   ].map(([l, v, sub, c]) => `<div class="stat"><div class="label">${l}</div><div class="value ${c}">${v}</div><div class="sub">${sub}</div></div>`).join('');
 }
-function findings() {
-  const s = pick(), T = total(s);
-  if (!T) { $('#findings').innerHTML = ''; return; }
-  const m = d3.rollup(pick(['year']), total, r => r.year), v = y => m.get(y) || 0;
-  const items = [];
-  items.push(`Hospitalisations went from <strong>${fmt(v(2011))}</strong> in 2011 to <strong>${fmt(v(2019))}</strong> in 2019, then <strong>${fmt(v(2020))}</strong> in 2020 (${v(2019) ? signed(v(2020) / v(2019) - 1) : 'n/a'} on 2019) and <strong>${fmt(v(2021))}</strong> in 2021.`);
-  items.push(drop && drop.pct < -0.05
-    ? `<strong>${drop.month} 2020</strong> was the sharpest fall: <strong>${fmt(drop.cur)}</strong> hospitalisations, ${signed(drop.pct)} against the 2017&ndash;2019 average for ${drop.month} (${fmt(Math.round(drop.prev))}).`
-    : `No month of 2020 fell more than 5% below the 2017&ndash;2019 average for this selection.`);
-  const u = d3.greatest(d3.rollups(s, total, r => r.user), d => d[1]);
-  const mo = total(s.filter(r => r.user === 'Motorcyclist')), cy = total(s.filter(r => r.user === 'Pedal cyclist'));
-  items.push(`<strong>${lab(u[0])}</strong> accounts for ${pct(u[1] / T)} of hospitalisations. Motorcyclists make up ${pct(mo / T)} and pedal cyclists ${pct(cy / T)}.`);
-  const a = d3.greatest(d3.rollups(s, total, r => r.age), d => d[1]);
-  items.push(`The largest age group is <strong>${lab(a[0])}</strong> (${pct(a[1] / T)}). Males account for ${pct(total(s.filter(r => r.sex === 'Male')) / T)} of hospitalisations.`);
-  $('#findings').innerHTML = items.map(t => `<div class="story-card"><div class="story-content"><p>${t}</p></div></div>`).join('');
-}
-
 // ---------- Charts ----------
 function trend() {
   const data = pick(['year']); if (!total(data)) return empty('#trend');
@@ -94,10 +77,10 @@ function trend() {
   grid(g, y, W, M);
   g.append('g').selectAll('text').data(ys).join('text').attr('x', x).attr('y', H - 10).attr('text-anchor', 'middle').attr('font-size', 12)
     .attr('fill', d => d === 2020 ? C.amber : C.muted).attr('font-weight', d => d === 2020 ? 700 : 400).text(d => d);
-  g.append('path').datum(ys).attr('d', d3.area().x(x).y0(y(0)).y1(d => y(val(d))).curve(d3.curveMonotoneX)).attr('fill', '#1E90C8').attr('opacity', .12);
-  g.append('path').datum(ys).attr('d', d3.line().x(x).y(d => y(val(d))).curve(d3.curveMonotoneX)).attr('fill', 'none').attr('stroke', '#1E90C8').attr('stroke-width', 3);
+  g.append('path').datum(ys).attr('d', d3.area().x(x).y0(y(0)).y1(d => y(val(d))).curve(d3.curveMonotoneX)).attr('fill', C.navy).attr('opacity', .12);
+  g.append('path').datum(ys).attr('d', d3.line().x(x).y(d => y(val(d))).curve(d3.curveMonotoneX)).attr('fill', 'none').attr('stroke', C.navy).attr('stroke-width', 3);
   g.append('g').selectAll('circle').data(ys).join('circle').attr('cx', x).attr('cy', d => y(val(d)))
-    .attr('r', d => String(d) === f.year ? 8 : 5).attr('fill', d => d === 2020 ? C.amber : '#1E90C8')
+    .attr('r', d => String(d) === f.year ? 8 : 5).attr('fill', d => d === 2020 ? C.amber : C.navy)
     .attr('stroke', d => String(d) === f.year ? C.ink : '#fff').attr('stroke-width', 2).style('cursor', 'pointer')
     .on('click', (e, d) => toggle('year', d)).on('mousemove', (e, d) => show(e, `<b>${d}</b><br>${fmt(val(d))} hospitalisations`)).on('mouseleave', hide);
   g.append('g').selectAll('text').data([2011, 2019, 2020, 2021]).join('text').attr('x', x).attr('text-anchor', 'middle')
@@ -166,11 +149,36 @@ function ages() {
 
 function render() {
   if (!rows.length) return;
-  kpis(); trend(); months(); findings();
+  const active = KEYS.filter(k => f[k] !== 'all');
+  const count = document.getElementById('filterCount');
+  if (count) count.textContent = active.length ? `${active.length} active filter${active.length === 1 ? '' : 's'} · ${fmt(pick().length)} rows` : `All data · ${fmt(rows.length)} rows`;
+  kpis(); trend(); months();
   hbar('#users', agg('user'), 'user', (d, i) => SHADES[Math.min(i, 4)], 'Hospitalisations by road user');
   ages();
-  hbar('#remote', agg('remote', ['Major Cities', 'Regional', 'Remote', 'Missing']), 'remote', d => d.k === 'Missing' ? C.grey : C.amber, 'Hospitalisations by remoteness area');
+  document.dispatchEvent(new CustomEvent('visiroad-data-update', { detail: { rows: pick(), year: f.year, remote: f.remote } }));
 }
+
+// Recolour the SVG charts when the appearance toggle changes.
+document.addEventListener('dashboard-theme-change', () => {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  Object.assign(C, dark ? {ink:'#F1F7FA',muted:'#ADC3D1',rule:'#30495E',navy:'#55CECB',amber:'#F6AF70',grey:'#93A7B9'} : {ink:'#172D42',muted:'#52677A',rule:'#D9E5EB',navy:'#087D83',amber:'#D7732B',grey:'#92A6AE'});
+  SHADES.splice(0, SHADES.length, ...(dark ? ['#74E1D7','#48BDB9','#4C9DC9','#8C82D4','#BDB4ED'] : ['#142D4E','#166A78','#2296A1','#56B4AE','#9AD7C9']));
+  render();
+});
+
+// Export only the rows matching the five dashboard filters.
+document.getElementById('exportCSV')?.addEventListener('click', () => {
+  if (!rows.length) return;
+  const columns = ['year','month','remote','user','sex','age','n'];
+  const headers = ['Calendar year','Month','ABS remoteness area','Road user','Sex','Age group','Hospitalisations'];
+  const csv = [headers, ...pick().map(r => columns.map(k => r[k] ?? ''))]
+    .map(fields => fields.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const url = URL.createObjectURL(new Blob(['\uFEFF',csv], {type:'text/csv;charset=utf-8;'}));
+  const anchor = document.createElement('a');
+  anchor.href = url; anchor.download = 'road-injuries-filtered.csv';
+  document.body.appendChild(anchor); anchor.click(); anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+});
 
 d3.csv('data/CSVG6.csv', d => ({ year: +d['Calendar year'], month: d.Month, remote: d['ABS remoteness area'], age: d['Age group'], sex: d.Sex, user: d['Road user'], n: +d.Hospitalisations }))
   .then(data => {

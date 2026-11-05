@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hospitalised Road Injuries · Australia 2011–2021</title>
+  <title>VisiRoad · Hospitalised Road Injuries Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="css/style.css">
@@ -14,8 +14,8 @@
       height: 520px;
       border-radius: 12px;
       overflow: hidden;
-      border: 1px solid #cbd5e1;
-      background-color: #0b101d;
+      border: 1px solid #A6C9CD;
+      background-color: #102C39;
     }
 
     #map {
@@ -27,12 +27,12 @@
       position: absolute;
       bottom: 20px;
       right: 20px;
-      background: rgba(15, 23, 42, 0.92);
+      background: rgba(16, 44, 57, 0.94);
       backdrop-filter: blur(6px);
       color: #ffffff;
       padding: 14px 18px;
       border-radius: 8px;
-      border: 1px solid #334155;
+      border: 1px solid #3A6973;
       z-index: 1000;
       font-size: 12px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
@@ -41,12 +41,12 @@
     .legend-heading {
       font-weight: 700;
       margin-bottom: 2px;
-      color: #f8fafc;
+      color: #F4FBFB;
     }
 
     .legend-sub {
       font-size: 11px;
-      color: #94a3b8;
+      color: #92A6AE;
       margin-bottom: 10px;
     }
 
@@ -77,7 +77,7 @@
 
     .remote-stat-card {
       background: #ffffff;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #D3E5E7;
       padding: 12px 16px;
       border-radius: 8px;
     }
@@ -85,14 +85,14 @@
     .remote-stat-title {
       font-size: 11px;
       font-weight: 700;
-      color: #64748b;
+      color: #526878;
       text-transform: uppercase;
     }
 
     .remote-stat-val {
       font-size: 20px;
       font-weight: 700;
-      color: #0f172a;
+      color: #193247;
       margin-top: 4px;
     }
 
@@ -108,19 +108,23 @@
   </style>
 </head>
 <body>
+<div id="readingProgress" aria-hidden="true"></div>
 <div class="shell">
   <aside class="rail">
     <div class="rail-brand">
+      <div class="brand-logo-wrap">
+        <img src="images/visiroad-logo.png" alt="VisiRoad logo" class="brand-logo">
+      </div>
       <span class="rail-kicker">Australia &middot; 2011&ndash;2021</span>
-      <h1>Hospitalised Road Injuries</h1>
-      <p>Who is hurt on our roads, and how has it changed?</p>
+      <h1>VisiRoad</h1>
     </div>
-    <nav class="header-nav" aria-label="Chapters">
-      <button class="nav-btn active" data-section="overview">Overview</button>
-      <button class="nav-btn" data-section="time">Over time</button>
-      <button class="nav-btn" data-section="who">Who is affected</button>
-      <button class="nav-btn" data-section="where">Where</button>
+    <nav class="header-nav" aria-label="Dashboard views">
+      <button class="nav-btn active" data-section="overview" aria-selected="true">Dashboard Overview</button>
+      <button class="nav-btn" data-section="where" aria-selected="false">Regional Map</button>
     </nav>
+    <div class="theme-panel">
+      <button type="button" class="theme-switch" id="themeToggle" aria-label="Switch to dark mode" aria-pressed="false"><span id="themeLabel">Dark mode</span><span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span></button>
+    </div>
     <div class="status-card">
       <div class="status"><span id="statusIndicator" class="status-indicator loading"></span><span id="statusText">Loading data&hellip;</span></div>
     </div>
@@ -129,92 +133,40 @@
     <div class="container">
       <div class="filters">
         <div class="controls" id="controls" aria-label="Filters"></div>
-        <button id="reset" class="refresh-btn" type="button">Reset filters</button>
+        <div class="filter-actions"><span class="filter-count" id="filterCount" role="status" aria-live="polite">All data</span><button id="exportCSV" class="export-btn" type="button" title="Download the current filtered data as CSV">↓ Export CSV</button><button id="reset" class="refresh-btn" type="button">Reset filters</button></div>
         <p class="hint">These choices change every chart. You can also click a bar or a year to filter.</p>
       </div>
 
-      <section class="dashboard-section" id="overview-section">
-        <div class="card overview">
-          <div class="section-header"><h2>How many people were hospitalised?</h2><p>Figures for the current selection of filters.</p></div>
-          <div class="statgrid" id="kpis"></div>
-        </div>
-        <div class="card overview">
-          <div class="section-header"><h2>Key findings</h2><p>These sentences update as you change the filters.</p></div>
-          <div class="story-grid" id="findings"></div>
-        </div>
-      </section>
-
-      <section class="dashboard-section" id="time-section">
-        <div class="card">
-          <div class="section-header"><h2>Did hospitalisations change between 2011 and 2021?</h2><p>Hospitalisations per year. 2020, the first COVID-19 year, is marked in amber.</p></div>
-          <div class="chart-container" id="trend"></div>
-        </div>
-        <div class="card">
-          <div class="section-header"><h2>What happened in 2020?</h2><p>Each month of 2020 compared with the average for the same month in 2017&ndash;2019.</p></div>
-          <div class="chart-container" id="months"></div>
+      <section class="dashboard-section" id="overview-section" aria-label="Dashboard overview">
+        <div class="dashboard-intro"><div><span class="eyebrow">AUSTRALIAN ROAD SAFETY DATA</span><h2>Hospitalisation overview</h2></div><p>Explore patterns across years, road users, age groups and remoteness.</p></div>
+        <div class="card overview kpi-card"><div class="section-header"><h3>Hospitalisations at a glance</h3></div><div class="statgrid" id="kpis"></div></div>
+        <div class="visual-grid">
+          <div class="card"><div class="section-header"><h3>Annual hospitalisations</h3><p>2011–2021 · select a year on the chart to filter.</p></div><div class="chart-container" id="trend"></div></div>
+          <div class="card"><div class="section-header"><h3>2020 monthly comparison</h3><p>2020 versus the 2017–2019 monthly average.</p></div><div class="chart-container" id="months"></div></div>
+          <div class="card"><div class="section-header"><h3>Hospitalisations by road user</h3><p>Select a bar to filter the dashboard.</p></div><div class="chart-container" id="users"></div></div>
+          <div class="card"><div class="section-header"><h3>Hospitalisations by age group</h3><p>Distribution across age groups.</p></div><div class="chart-container" id="ages"></div></div>
         </div>
       </section>
-
-      <section class="dashboard-section" id="who-section">
-        <div class="card">
-          <div class="section-header"><h2>Which road users are hospitalised most?</h2><p>Ranked by number of hospitalisations. Click a bar to focus on that group.</p></div>
-          <div class="chart-container" id="users"></div>
-        </div>
-        <div class="card">
-          <div class="section-header"><h2>Which age groups are affected?</h2><p>Hospitalisations by age group.</p></div>
-          <div class="chart-container" id="ages"></div>
-        </div>
-      </section>
-
-      <section class="dashboard-section" id="where-section">
-        <div class="card">
-          <div class="section-header">
-            <h2>Where do the hospitalisations happen?</h2>
-            <p>Interactive ABS Remoteness map displaying hospitalisation concentration across Australian Major Cities, Regional, and Remote areas (CSVG6.csv dataset).</p>
+      <section class="dashboard-section" id="where-section" hidden aria-label="Regional map">
+        <div class="dashboard-intro"><div><span class="eyebrow">AUSTRALIAN ROAD SAFETY DATA</span><h2>Regional map</h2></div><p>Use the Year and Remoteness filters above to explore the regional totals.</p></div>
+        <div class="card map-data-card">
+          <div class="section-header"><h3>Hospitalisations by remoteness area</h3><p>Australian remoteness areas are filled using official ABS 2021 boundaries. Select a year or other filter to update the nationwide category totals and shading. Click an area to filter by category.</p></div>
+          <div class="map-card-wrapper"><div id="map" aria-label="Interactive Australian remoteness reference map"></div>
+            <div class="map-legend-overlay"><div class="legend-heading">Remoteness area totals</div><div id="mapYearLabel" class="legend-sub">2011–2021</div><div class="legend-bar-container" id="mapLegend" aria-live="polite"></div></div>
           </div>
-          
-          <div class="map-card-wrapper">
-            <div id="map"></div>
-            
-            <div class="map-legend-overlay">
-              <div class="legend-heading">ABS Remoteness Concentration</div>
-              <div class="legend-sub">CSVG6.csv Hospitalisations (2011–2021)</div>
-              <div class="legend-bar-container">
-                <div class="legend-row"><div class="legend-swatch" style="background:#b91c1c;"></div> Major Cities (271,480 · 66%)</div>
-                <div class="legend-row"><div class="legend-swatch" style="background:#f59e0b;"></div> Regional Areas (117,818 · 29%)</div>
-                <div class="legend-row"><div class="legend-swatch" style="background:#3b82f6;"></div> Remote Areas (12,753 · 3%)</div>
-                <div class="legend-row"><div class="legend-swatch" style="background:#94a3b8;"></div> Not Stated (8,833 · 2%)</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="remoteness-stats">
-            <div class="remote-stat-card">
-              <div class="remote-stat-title">Major Cities</div>
-              <div class="remote-stat-val">271,480 (66%)</div>
-            </div>
-            <div class="remote-stat-card">
-              <div class="remote-stat-title">Regional</div>
-              <div class="remote-stat-val">117,818 (29%)</div>
-            </div>
-            <div class="remote-stat-card">
-              <div class="remote-stat-title">Remote</div>
-              <div class="remote-stat-val">12,753 (3%)</div>
-            </div>
-            <div class="remote-stat-card">
-              <div class="remote-stat-title">Not Stated</div>
-              <div class="remote-stat-val">8,833 (2%)</div>
-            </div>
-          </div>
+          <p class="map-geometry-status" id="mapGeometryStatus" role="status">Loading official ABS remoteness-area boundaries…</p>
+          <div class="remoteness-stats" id="remotenessStats"></div>
+          <p class="map-disclaimer">Map boundaries: ABS ASGS 2021 Remoteness Areas. Regional merges Inner and Outer Regional; Remote merges Remote and Very Remote. The colours show categories, and their opacity changes with selected Australia-wide category totals. <strong>These are not counts at individual locations or polygons.</strong> The boundaries are fixed to the 2021 classification, even when viewing earlier years. “Not stated” has no mapped boundary. <a href="https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs/edition-3-july-2021-june-2026/remoteness-structure/remoteness-areas" target="_blank" rel="noopener noreferrer">ABS remoteness geography</a>.</p>
         </div>
       </section>
     </div>
     
+    <button class="back-to-top" id="backToTop" aria-label="Back to top" type="button" title="Back to top">↑</button>
     <footer>
       <div class="footer-content">
         <div class="footer-info">
-          <h3>About this data</h3>
-          <p>CSVG6.csv: cleaned hospitalised road-injury records, 2011&ndash;2021. Figures are counts of hospitalisations, not rates per person or per kilometre travelled.</p>
+          <h3>About VisiRoad</h3>
+          <p><strong>VisiRoad</strong> currently uses CSVG6.csv cleaned hospitalised road-injury records from 2011&ndash;2021. To use the latest KNIME workflow output, export <code>Final.csv</code> and replace <code>data/CSVG6.csv</code> with a CSV using the expected column names. Figures are counts of hospitalisations, not rates per person or per kilometre travelled.</p>
         </div>
       </div>
     </footer>
@@ -224,62 +176,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+<script src="js/theme.js"></script>
 <script src="js/app.js"></script>
 <script src="js/layout.js"></script>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const map = L.map('map', {
-      center: [-25.2744, 133.7751],
-      zoom: 4,
-      zoomControl: true
-    });
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 8,
-      minZoom: 3
-    }).addTo(map);
-
-    const remotenessData = {
-      "New South Wales": { area: "Major Cities / Regional", count: 142850, color: "#b91c1c" },
-      "Victoria": { area: "Major Cities / Regional", count: 112400, color: "#b91c1c" },
-      "Queensland": { area: "Regional / Major Cities", count: 88900, color: "#f59e0b" },
-      "Western Australia": { area: "Regional / Remote", count: 42100, color: "#3b82f6" },
-      "South Australia": { area: "Regional / Major Cities", count: 18500, color: "#3b82f6" },
-      "Tasmania": { area: "Regional", count: 4200, color: "#3b82f6" },
-      "Northern Territory": { area: "Remote", count: 1250, color: "#3b82f6" },
-      "Australian Capital Territory": { area: "Major Cities", count: 684, color: "#b91c1c" }
-    };
-
-    fetch('https://raw.githubusercontent.com/tonywr71/GeoJson-Data/master/australian-states.json')
-      .then(response => response.json())
-      .then(data => {
-        L.geoJSON(data, {
-          className: 'state-polygon',
-          style: function(feature) {
-            const stateName = feature.properties.STATE_NAME || feature.properties.name;
-            const info = remotenessData[stateName] || { color: '#3b82f6' };
-            return {
-              fillColor: info.color,
-              weight: 1.5,
-              opacity: 1,
-              color: '#ffffff',
-              fillOpacity: 0.70
-            };
-          },
-          onEachFeature: function(feature, layer) {
-            const stateName = feature.properties.STATE_NAME || feature.properties.name;
-            const info = remotenessData[stateName] || { area: "Regional", count: 0 };
-            layer.bindTooltip(
-              `<b>${stateName}</b><br/>Primary Remoteness: <b>${info.area}</b><br/>Hospitalised Cases: <b>${info.count.toLocaleString()}</b>`,
-              { sticky: true }
-            );
-          }
-        }).addTo(map);
-      })
-      .catch(err => console.error("Error loading GeoJSON boundaries:", err));
-  });
-</script>
+<script src="js/map.js"></script>
 </body>
 </html>

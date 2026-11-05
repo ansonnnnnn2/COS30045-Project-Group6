@@ -1,3 +1,0 @@
-# Hospitalised Road Injuries - Australia 2011-2021
-Run through a local server (e.g. VS Code Live Server on index.html). The data file is data/CSVG6.csv.
-Files: index.html, css/style.css, js/app.js (all charts), js/layout.js (chapter menu), data/CSVG6.csv.
