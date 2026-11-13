@@ -119,9 +119,11 @@
       <h1>VisiRoad</h1>
     </div>
     <nav class="header-nav" aria-label="Dashboard views">
-      <button class="nav-btn active" data-section="overview" aria-selected="true">Dashboard Overview</button>
+      <button class="nav-btn active" data-section="overview" aria-selected="true">Dashboard</button>
+      <button class="nav-btn" data-section="groups" aria-selected="false">Age &amp; Road User Groups</button>
       <button class="nav-btn" data-section="where" aria-selected="false">Regional Map</button>
     </nav>
+    <button type="button" class="notes-link rail-notes" data-open-notes>About &amp; data notes</button>
     <div class="theme-panel">
       <button type="button" class="theme-switch" id="themeToggle" aria-label="Switch to dark mode" aria-pressed="false"><span id="themeLabel">Dark mode</span><span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span></button>
     </div>
@@ -143,10 +145,15 @@
         <div class="visual-grid">
           <div class="card"><div class="section-header"><h3>Annual hospitalisations</h3><p>2011–2021 · select a year on the chart to filter.</p></div><div class="chart-container" id="trend"></div></div>
           <div class="card"><div class="section-header"><h3>2020 monthly comparison</h3><p>2020 versus the 2017–2019 monthly average.</p></div><div class="chart-container" id="months"></div></div>
-          <div class="card"><div class="section-header"><h3>Hospitalisations by road user</h3><p>Select a bar to filter the dashboard.</p></div><div class="chart-container" id="users"></div></div>
-          <div class="card"><div class="section-header"><h3>Hospitalisations by age group</h3><p>Distribution across age groups.</p></div><div class="chart-container" id="ages"></div></div>
+
+
         </div>
       </section>
+
+
+<section class="dashboard-section detail-section" id="groups-section" hidden aria-label="Age and road user groups">
+<div class="dashboard-intro"><div><span class="eyebrow">AUSTRALIAN ROAD SAFETY DATA</span><h2>Age &amp; road user groups</h2></div><p>Compare both groups side by side. Select a bar to filter all views.</p></div>
+<div class="visual-grid"><div class="card"><div class="section-header"><h3>Hospitalisations by road user</h3><p>Select a bar to filter the dashboard.</p></div><div class="chart-container" id="users"></div></div><div class="card"><div class="section-header"><h3>Hospitalisations by age group</h3><p>Distribution across age groups.</p></div><div class="chart-container" id="ages"></div></div></div></section>
       <section class="dashboard-section" id="where-section" hidden aria-label="Regional map">
         <div class="dashboard-intro"><div><span class="eyebrow">AUSTRALIAN ROAD SAFETY DATA</span><h2>Regional map</h2></div><p>Use the Year and Remoteness filters above to explore the regional totals.</p></div>
         <div class="card map-data-card">
@@ -156,23 +163,29 @@
           </div>
           <p class="map-geometry-status" id="mapGeometryStatus" role="status">Loading official ABS remoteness-area boundaries…</p>
           <div class="remoteness-stats" id="remotenessStats"></div>
-          <p class="map-disclaimer">Map boundaries: ABS ASGS 2021 Remoteness Areas. Regional merges Inner and Outer Regional; Remote merges Remote and Very Remote. The colours show categories, and their opacity changes with selected Australia-wide category totals. <strong>These are not counts at individual locations or polygons.</strong> The boundaries are fixed to the 2021 classification, even when viewing earlier years. “Not stated” has no mapped boundary. <a href="https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs/edition-3-july-2021-june-2026/remoteness-structure/remoteness-areas" target="_blank" rel="noopener noreferrer">ABS remoteness geography</a>.</p>
+          <p class="map-disclaimer">Shading shows nationwide category totals, not counts at individual locations. <button type="button" class="notes-link" data-open-notes>Read map and data notes →</button></p>
         </div>
       </section>
+
     </div>
     
     <button class="back-to-top" id="backToTop" aria-label="Back to top" type="button" title="Back to top">↑</button>
-    <footer>
+
+  </div>
+</div>
+
+<dialog id="dataNotes" aria-labelledby="notesTitle"><div class="notes-heading"><h2 id="notesTitle">About &amp; data notes</h2><button type="button" id="closeNotes" class="refresh-btn">Close</button></div>    
       <div class="footer-content">
         <div class="footer-info">
           <h3>About VisiRoad</h3>
           <p><strong>VisiRoad</strong> currently uses CSVG6.csv cleaned hospitalised road-injury records from 2011&ndash;2021. To use the latest KNIME workflow output, export <code>Final.csv</code> and replace <code>data/CSVG6.csv</code> with a CSV using the expected column names. Figures are counts of hospitalisations, not rates per person or per kilometre travelled.</p>
         </div>
       </div>
-    </footer>
-  </div>
-</div>
-
+    
+<h3>Understanding the map</h3>          <p class="map-disclaimer">Map boundaries: ABS ASGS 2021 Remoteness Areas. Regional merges Inner and Outer Regional; Remote merges Remote and Very Remote. The colours show categories, and their opacity changes with selected Australia-wide category totals. <strong>These are not counts at individual locations or polygons.</strong> The boundaries are fixed to the 2021 classification, even when viewing earlier years. “Not stated” has no mapped boundary. <a href="https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs/edition-3-july-2021-june-2026/remoteness-structure/remoteness-areas" target="_blank" rel="noopener noreferrer">ABS remoteness geography</a>.</p>
+<h3>Using the dashboard</h3><p>The five filters apply across every view. Click a year or a category to select it; click again to clear it. Use Reset filters to return to all data. Export CSV downloads the currently filtered records.</p>
+<p>The monthly chart always compares 2020 with the 2017–2019 average; the Year filter applies to the other charts.</p>
+</dialog>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
