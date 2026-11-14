@@ -1,0 +1,12 @@
+{
+  "file": "FinalG6.csv",
+  "sha256": "0e909f77272e160ded0f2e8f2fc7341a8b6f50a072592569b6b335c3d6cb7f31",
+  "rows": 85397,
+  "geographies": {
+    "ABS remoteness area": 81562,
+    "State or territory": 3835
+  },
+  "measure": "Count of cases",
+  "source": "User-supplied KNIME merged export, copied byte-for-byte.",
+  "suppression": "Upstream workflow converts n.p. values to zero; original suppression locations cannot be recovered from this file."
+}

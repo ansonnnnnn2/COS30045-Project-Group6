@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VisiRoad · Hospitalised Road Injuries Dashboard</title>
+  <title>VisiRoad · Road Injury Cases Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="css/style.css">
@@ -136,14 +136,14 @@
       <div class="filters">
         <div class="controls" id="controls" aria-label="Filters"></div>
         <div class="filter-actions"><span class="filter-count" id="filterCount" role="status" aria-live="polite">All data</span><button id="exportCSV" class="export-btn" type="button" title="Download the current filtered data as CSV">↓ Export CSV</button><button id="reset" class="refresh-btn" type="button">Reset filters</button></div>
-        <p class="hint">These choices change every chart. You can also click a bar or a year to filter.</p>
+        
       </div>
 
       <section class="dashboard-section" id="overview-section" aria-label="Dashboard overview">
-        <div class="dashboard-intro"><div><span class="eyebrow">AUSTRALIAN ROAD SAFETY DATA</span><h2>Hospitalisation overview</h2></div><p>Explore patterns across years, road users, age groups and remoteness.</p></div>
-        <div class="card overview kpi-card"><div class="section-header"><h3>Hospitalisations at a glance</h3></div><div class="statgrid" id="kpis"></div></div>
+        <div class="dashboard-intro"><div><span class="eyebrow">AUSTRALIAN ROAD SAFETY DATA</span><h2>National injury overview</h2></div><p>Explore patterns across years, road users, age groups and remoteness.</p></div>
+        <div class="card overview kpi-card"><div class="section-header"><h3>National recorded cases at a glance</h3></div><div class="statgrid" id="kpis"></div></div>
         <div class="visual-grid">
-          <div class="card"><div class="section-header"><h3>Annual hospitalisations</h3><p>2011–2021 · select a year on the chart to filter.</p></div><div class="chart-container" id="trend"></div></div>
+          <div class="card"><div class="section-header"><h3>Annual recorded cases</h3><p>2011–2021 · select a year on the chart to filter.</p></div><div class="chart-container" id="trend"></div></div>
           <div class="card"><div class="section-header"><h3>2020 monthly comparison</h3><p>2020 versus the 2017–2019 monthly average.</p></div><div class="chart-container" id="months"></div></div>
 
 
@@ -153,15 +153,15 @@
 
 <section class="dashboard-section detail-section" id="groups-section" hidden aria-label="Age and road user groups">
 <div class="dashboard-intro"><div><span class="eyebrow">AUSTRALIAN ROAD SAFETY DATA</span><h2>Age &amp; road user groups</h2></div><p>Compare both groups side by side. Select a bar to filter all views.</p></div>
-<div class="visual-grid"><div class="card"><div class="section-header"><h3>Hospitalisations by road user</h3><p>Select a bar to filter the dashboard.</p></div><div class="chart-container" id="users"></div></div><div class="card"><div class="section-header"><h3>Hospitalisations by age group</h3><p>Distribution across age groups.</p></div><div class="chart-container" id="ages"></div></div></div></section>
+<div class="visual-grid"><div class="card"><div class="section-header"><h3>Recorded cases by road user</h3><p>Select a bar to filter the dashboard.</p></div><div class="chart-container" id="users"></div></div><div class="card"><div class="section-header"><h3>Recorded cases by age group</h3><p>Distribution across age groups.</p></div><div class="chart-container" id="ages"></div></div></div></section>
       <section class="dashboard-section" id="where-section" hidden aria-label="Regional map">
         <div class="dashboard-intro"><div><span class="eyebrow">AUSTRALIAN ROAD SAFETY DATA</span><h2>Regional map</h2></div><p>Use the Year and Remoteness filters above to explore the regional totals.</p></div>
         <div class="card map-data-card">
-          <div class="section-header"><h3>Hospitalisations by remoteness area</h3><p>Australian remoteness areas are filled using official ABS 2021 boundaries. Select a year or other filter to update the nationwide category totals and shading. Click an area to filter by category.</p></div>
-          <div class="map-card-wrapper"><div id="map" aria-label="Interactive Australian remoteness reference map"></div>
+          <div class="section-header"><h3>Recorded cases by remoteness area</h3><p>Australian remoteness areas are filled using official ABS 2021 boundaries. Select a year or other filter to update the nationwide category totals and shading. Click an area to filter by category.</p></div>
+          <div class="regional-body"><div class="regional-map-column"><div class="map-card-wrapper"><div id="map" aria-label="Interactive Australian remoteness reference map"></div>
             <div class="map-legend-overlay"><div class="legend-heading">Remoteness area totals</div><div id="mapYearLabel" class="legend-sub">2011–2021</div><div class="legend-bar-container" id="mapLegend" aria-live="polite"></div></div>
           </div>
-          <p class="map-geometry-status" id="mapGeometryStatus" role="status">Loading official ABS remoteness-area boundaries…</p>
+          <p class="map-geometry-status" id="mapGeometryStatus" role="status">Loading official ABS remoteness-area boundaries…</p></div><aside class="state-comparison-panel" aria-label="State and territory comparison"><h3>State &amp; territory totals</h3><p id="stateYearLabel" class="state-year"></p><p class="state-scope">Year filter only · published state totals</p><div id="stateComparison" class="chart-container"></div><button id="exportStates" type="button" class="notes-link">Export state totals</button></aside></div>
           <div class="remoteness-stats" id="remotenessStats"></div>
           <p class="map-disclaimer">Shading shows nationwide category totals, not counts at individual locations. <button type="button" class="notes-link" data-open-notes>Read map and data notes →</button></p>
         </div>
@@ -178,18 +178,21 @@
       <div class="footer-content">
         <div class="footer-info">
           <h3>About VisiRoad</h3>
-          <p><strong>VisiRoad</strong> currently uses CSVG6.csv cleaned hospitalised road-injury records from 2011&ndash;2021. To use the latest KNIME workflow output, export <code>Final.csv</code> and replace <code>data/CSVG6.csv</code> with a CSV using the expected column names. Figures are counts of hospitalisations, not rates per person or per kilometre travelled.</p>
-        </div>
+          <p><strong>VisiRoad</strong> reads the supplied <code>FinalG6.csv</code>: 81,562 national records and 3,835 state/territory records. The plotted measure is <strong>Count of cases</strong>, not the previous Hospitalisations measure. National and state records describe overlapping populations and are analysed separately. These are counts, not exposure-adjusted risks.</p>
+<p>The national overview, monthly comparison and Groups charts use the national rows. The Regional Map view also includes a state/territory bar chart from the same merged file. That state chart uses only total rows and responds only to Year; demographic and remoteness filters are not applied because the state tables do not contain joint combinations. National and state published totals are not forced to match or added together. Main Export CSV downloads the national selection; Export state totals downloads state total rows for the selected year.</p>
+<p>The supplied KNIME rules converted suppressed n.p. values to zero. FinalG6.csv no longer distinguishes those substitutions from measured zeroes. State demographic sums can therefore understate the underlying totals. The website uses the uploaded file unchanged and does not treat its zeroes as evidence that the original suppressed values were known.</p>
+</div>
       </div>
     
 <h3>Understanding the map</h3>          <p class="map-disclaimer">Map boundaries: ABS ASGS 2021 Remoteness Areas. Regional merges Inner and Outer Regional; Remote merges Remote and Very Remote. The colours show categories, and their opacity changes with selected Australia-wide category totals. <strong>These are not counts at individual locations or polygons.</strong> The boundaries are fixed to the 2021 classification, even when viewing earlier years. “Not stated” has no mapped boundary. <a href="https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs/edition-3-july-2021-june-2026/remoteness-structure/remoteness-areas" target="_blank" rel="noopener noreferrer">ABS remoteness geography</a>.</p>
-<h3>Using the dashboard</h3><p>The five filters apply across every view. Click a year or a category to select it; click again to clear it. Use Reset filters to return to all data. Export CSV downloads the currently filtered records.</p>
-<p>The monthly chart always compares 2020 with the 2017–2019 average; the Year filter applies to the other charts.</p>
+<h3>Using the dashboard</h3><p>Dataset-specific filters apply across the three views. Click a year or a category to select it; click again to clear it. Use Reset filters to return to all data. Export CSV downloads the currently filtered records.</p>
+<p>The annual chart preserves all years and the monthly chart compares 2020 with the 2017–2019 average. Each group chart preserves its own category alternatives. The state comparison responds to Year only.</p>
 </dialog>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script src="js/theme.js"></script>
+<script src="js/data-model.js"></script>
 <script src="js/app.js"></script>
 <script src="js/layout.js"></script>
 

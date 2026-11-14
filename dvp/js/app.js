@@ -1,4 +1,4 @@
-// app.js - Hospitalised road injuries dashboard (D3). Reads data/CSVG6.csv.
+// app.js - Merged national/state road injury dashboard (D3). Reads data/FinalG6.csv.
 (() => {
 const C = { ink: '#193247', muted: '#526878', rule: '#C9DDE0', navy: '#167D8D', amber: '#D7732B', grey: '#92A6AE' };
 const SHADES = ['#142D4E', '#166A78', '#2296A1', '#56B4AE', '#9AD7C9'];
@@ -14,10 +14,11 @@ const signed = x => d3.format('+.0%')(x).replace('-', '\u2212');
 const $ = s => document.querySelector(s);
 const total = a => d3.sum(a, r => r.n);
 let rows = [], drop = null;
-const f = Object.fromEntries(KEYS.map(k => [k, 'all']));
+const Data = window.VisiRoadData;
+const f = Object.fromEntries([...KEYS,'state','period'].map(k => [k, 'all']));
 
 // rows that match every filter except the ones in `skip` (so a chart can show all its own categories)
-const pick = (skip = []) => rows.filter(r => KEYS.every(k => skip.includes(k) || f[k] === 'all' || String(r[k]) === f[k]));
+const pick = (skip = [], breakdown = 'total') => Data.select(rows,'national',f,skip,breakdown);
 
 const tip = d3.select('body').append('div').attr('class', 'tip');
 const show = (e, h) => tip.html(h).style('display', 'block').style('left', (e.clientX + 14) + 'px').style('top', (e.clientY + 14) + 'px');
@@ -39,32 +40,29 @@ function toggle(k, v) { f[k] = f[k] === String(v) ? 'all' : String(v); $('#f-' +
 
 // ---------- Filters ----------
 function buildFilters() {
-  const present = k => new Set(rows.map(r => r[k]));
-  const byUser = d3.rollups(rows, total, r => r.user).sort((a, b) => b[1] - a[1]).map(d => d[0]);
-  const all = {
-    year: [...new Set(rows.map(r => r.year))].sort((a,b) => b-a), remote: ['Major Cities', 'Regional', 'Remote', 'Missing'], user: byUser,
-    sex: ['Male', 'Female', 'intersex or indeterminate or missing'], age: AGES
-  };
-  $('#controls').innerHTML = KEYS.map(k => {
-    const p = present(k), opts = all[k].filter(v => p.has(v));
-    return `<div><label for="f-${k}">${NAMES[k]}</label><select id="f-${k}"><option value="all">All</option>` +
-      opts.map(v => `<option value="${v}">${lab(v)}</option>`).join('') + '</select></div>';
-  }).join('');
-  KEYS.forEach(k => $('#f-' + k).addEventListener('change', e => { f[k] = e.target.value; render(); }));
-  $('#reset').addEventListener('click', () => { KEYS.forEach(k => { f[k] = 'all'; $('#f-' + k).value = 'all'; }); render(); });
+  const national = rows.filter(r => r.type === 'ABS remoteness area');
+  const years = [...new Set(rows.map(r=>r.year))].sort((a,b)=>b-a);
+  const all = {year:years, remote:['Major Cities','Regional','Remote','Missing'],
+    user:[...new Set(national.map(r=>r.user))].sort(), sex:[...new Set(national.map(r=>r.sex))].sort(), age:AGES,
+    period:['Jan-Jun','Jul-Dec']};
+  const fields = KEYS;
+  const names = {...NAMES,state:'State / territory',period:'Reporting period'};
+  const select = (id,label,opts,value) => `<div><label for="f-${id}">${label}</label><select id="f-${id}">${opts.map(([v,l])=>`<option value="${v}"${v===value?' selected':''}>${l}</option>`).join('')}</select></div>`;
+  $('#controls').innerHTML = fields.map(k=>select(k,names[k],[['all','All'],...all[k].map(v=>[String(v),lab(v)])],f[k])).join('');
+  fields.forEach(k=>$('#f-'+k).addEventListener('change',e=>{f[k]=e.target.value;render();}));
+  $('#reset').onclick=()=>{Object.keys(f).forEach(k=>f[k]='all');buildFilters();render();};
 }
-
 // ---------- Overview ----------
 function kpis() {
   const s = pick(), T = total(s);
-  if (!T) { $('#kpis').innerHTML = '<div class="stat"><div class="label">Hospitalisations</div><div class="value">0</div></div>'; return; }
+  if (!T) { $('#kpis').innerHTML = '<div class="stat"><div class="label">Recorded cases</div><div class="value">0</div></div>'; return; }
   const top = k => d3.greatest(d3.rollups(s, total, r => r[k]), d => d[1]);
   const u = top('user'), a = top('age'), male = total(s.filter(r => r.sex === 'Male'));
   $('#kpis').innerHTML = [
-    ['Hospitalisations', fmt(T), 'in the current selection', ''],
-    ['Most affected road user', lab(u[0]), pct(u[1] / T) + ' of hospitalisations', 'text'],
-    ['Largest age group', lab(a[0]), pct(a[1] / T) + ' of hospitalisations', 'text'],
-    ['Male share', pct(male / T), 'of hospitalisations', '']
+    ['Recorded cases', fmt(T), 'in the current selection', ''],
+    ['Most affected road user', lab(u[0]), pct(u[1] / T) + ' of recorded cases', 'text'],
+    ['Largest age group', lab(a[0]), pct(a[1] / T) + ' of recorded cases', 'text'],
+    ['Male share', pct(male / T), 'of recorded cases', '']
   ].map(([l, v, sub, c]) => `<div class="stat"><div class="label">${l}</div><div class="value ${c}">${v}</div><div class="sub">${sub}</div></div>`).join('');
 }
 // ---------- Charts ----------
@@ -72,7 +70,7 @@ function trend() {
   const data = pick(['year']); if (!total(data)) return empty('#trend');
   const m = d3.rollup(data, total, r => r.year), ys = d3.range(2011, 2022), val = y => m.get(y) || 0;
   const W = 720, H = 300, M = { t: 34, r: 30, b: 36, l: 56 };
-  const g = canvas('#trend', W, H, 'Hospitalisations per year, 2011 to 2021');
+  const g = canvas('#trend', W, H, 'Recorded cases per year, 2011 to 2021');
   const x = d3.scalePoint(ys, [M.l, W - M.r]).padding(.3), y = d3.scaleLinear([0, d3.max(ys, val) * 1.12], [H - M.b, M.t]).nice();
   grid(g, y, W, M);
   g.append('g').selectAll('text').data(ys).join('text').attr('x', x).attr('y', H - 10).attr('text-anchor', 'middle').attr('font-size', 12)
@@ -82,7 +80,7 @@ function trend() {
   g.append('g').selectAll('circle').data(ys).join('circle').attr('cx', x).attr('cy', d => y(val(d)))
     .attr('r', d => String(d) === f.year ? 8 : 5).attr('fill', d => d === 2020 ? C.amber : C.navy)
     .attr('stroke', d => String(d) === f.year ? C.ink : '#fff').attr('stroke-width', 2).style('cursor', 'pointer')
-    .on('click', (e, d) => toggle('year', d)).on('mousemove', (e, d) => show(e, `<b>${d}</b><br>${fmt(val(d))} hospitalisations`)).on('mouseleave', hide);
+    .on('click', (e, d) => toggle('year', d)).on('mousemove', (e, d) => show(e, `<b>${d}</b><br>${fmt(val(d))} recorded cases`)).on('mouseleave', hide);
   g.append('g').selectAll('text').data([2011, 2019, 2020, 2021]).join('text').attr('x', x).attr('text-anchor', 'middle')
     .attr('y', d => y(val(d)) + (d === 2020 ? 24 : -12)).attr('font-size', 12).attr('font-weight', 700)
     .attr('fill', d => d === 2020 ? C.amber : C.ink).text(d => fmt(val(d)));
@@ -98,7 +96,7 @@ function months() {
   const idx = d3.range(12).filter(i => pv[i] > 0);
   if (idx.length) { const i = d3.least(idx, j => cv[j] / pv[j] - 1); drop = { i, month: MON[i], pct: cv[i] / pv[i] - 1, cur: cv[i], prev: pv[i] }; }
   const W = 720, H = 300, M = { t: 40, r: 30, b: 36, l: 56 };
-  const g = canvas('#months', W, H, 'Hospitalisations per month in 2020 compared with the 2017 to 2019 average');
+  const g = canvas('#months', W, H, 'Recorded cases per month in 2020 compared with the 2017 to 2019 average');
   const x = d3.scalePoint(ABB, [M.l, W - M.r]).padding(.3), y = d3.scaleLinear([0, d3.max([...cv, ...pv]) * 1.12], [H - M.b, M.t]).nice();
   grid(g, y, W, M);
   g.append('g').selectAll('text').data(ABB).join('text').attr('x', x).attr('y', H - 10).attr('text-anchor', 'middle').attr('font-size', 12).attr('fill', C.muted).text(d => d);
@@ -119,16 +117,34 @@ function months() {
 
 function agg(key, order) {
   const m = d3.rollup(pick([key]), total, r => r[key]);
-  const data = (order || [...m.keys()]).map(k => ({ k, label: lab(k), v: m.get(k) || 0 })).filter(d => d.v > 0);
+  const sequence = order;
+  const data = (sequence || [...m.keys()]).map(k => ({ k, label: lab(k), v: m.get(k) || 0 })).filter(d => d.v > 0);
   return order ? data : data.sort((a, b) => b.v - a.v);
+}
+// The state comparison is an independent marginal total, controlled by Year only.
+function stateRows(){return Data.select(rows,'state',{...f,state:'all',period:'all'});}
+function states(){
+ const stateNames={NSW:'New South Wales',VIC:'Victoria',QLD:'Queensland',WA:'Western Australia',SA:'South Australia',TAS:'Tasmania',NT:'Northern Territory',ACT:'Australian Capital Territory'};
+ const selected=stateRows();
+ const data=d3.rollups(selected,total,r=>r.state).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
+ $('#stateYearLabel').textContent=(f.year==='all'?'2011–2021':f.year)+' · '+fmt(total(selected))+' published cases';
+ if(!data.length)return empty('#stateComparison');
+ const W=460,H=340,M={l:48,r:88,t:8,b:12},rowH=(H-M.t-M.b)/data.length;
+ const g=canvas('#stateComparison',W,H,'Published recorded cases by state and territory; Year filter only');
+ const x=d3.scaleLinear([0,d3.max(data,d=>d.v)||1],[0,W-M.l-M.r]);
+ const bars=g.selectAll('g').data(data).join('g').attr('transform',(d,i)=>`translate(0,${M.t+i*rowH})`);
+ bars.append('text').attr('x',M.l-10).attr('y',rowH/2).attr('dy','.35em').attr('text-anchor','end').attr('fill',C.ink).attr('font-size',14).text(d=>d.k);
+ bars.append('rect').attr('x',M.l).attr('y',7).attr('height',Math.max(3,rowH-14)).attr('width',d=>x(d.v)).attr('rx',3).attr('fill',C.navy);
+ bars.append('text').attr('x',d=>M.l+x(d.v)+7).attr('y',rowH/2).attr('dy','.35em').attr('fill',C.muted).attr('font-size',13).text(d=>fmt(d.v));
+ bars.on('mousemove',(e,d)=>show(e,`<b>${stateNames[d.k] || d.k} (${d.k})</b><br>${fmt(d.v)} cases<br>State published totals; Year filter only`)).on('mouseleave',hide);
 }
 function hbar(sel, data, key, colorFn, label) {
   if (!data.length) return empty(sel);
   const W = 760, rowH = 36, M = { l: 215, r: 130 }, H = data.length * rowH + 8, tot = d3.sum(data, d => d.v);
   const g = canvas(sel, W, H, label), x = d3.scaleLinear([0, d3.max(data, d => d.v)], [0, W - M.l - M.r]);
-  const row = g.selectAll('g').data(data).join('g').attr('transform', (d, i) => `translate(0,${i * rowH + 4})`).style('cursor', 'pointer')
-    .attr('opacity', d => f[key] === 'all' || f[key] === d.k ? 1 : .35).on('click', (e, d) => toggle(key, d.k))
-    .on('mousemove', (e, d) => show(e, `<b>${d.label}</b><br>${fmt(d.v)} hospitalisations (${pct(d.v / tot)})`)).on('mouseleave', hide);
+  const row = g.selectAll('g').data(data).join('g').attr('transform', (d, i) => `translate(0,${i * rowH + 4})`).style('cursor','pointer')
+    .attr('opacity', d => f[key] === 'all' || f[key] === d.k ? 1 : .35).on('click', (e, d) => toggle(key,d.k))
+    .on('mousemove', (e, d) => show(e, `<b>${d.label}</b><br>${fmt(d.v)} recorded cases (${pct(d.v / tot)})`)).on('mouseleave', hide);
   row.append('rect').attr('y', -4).attr('width', W).attr('height', rowH).attr('fill', 'transparent');
   row.append('text').attr('x', M.l - 12).attr('y', rowH / 2 - 3).attr('dy', '.32em').attr('text-anchor', 'end').attr('font-size', 13).attr('fill', C.ink).text(d => d.label);
   row.append('rect').attr('x', M.l).attr('y', 4).attr('height', rowH - 14).attr('rx', 3).attr('width', d => Math.max(2, x(d.v))).attr('fill', colorFn);
@@ -137,11 +153,11 @@ function hbar(sel, data, key, colorFn, label) {
 function ages() {
   const data = agg('age', AGES); if (!data.length) return empty('#ages');
   const W = 720, H = 300, M = { t: 30, r: 20, b: 40, l: 56 }, tot = d3.sum(data, d => d.v);
-  const g = canvas('#ages', W, H, 'Hospitalisations by age group');
+  const g = canvas('#ages', W, H, 'Recorded cases by age group');
   const x = d3.scaleBand(data.map(d => d.k), [M.l, W - M.r]).padding(.25), y = d3.scaleLinear([0, d3.max(data, d => d.v) * 1.1], [H - M.b, M.t]).nice();
   grid(g, y, W, M);
-  const b = g.selectAll('g.b').data(data).join('g').attr('class', 'b').style('cursor', 'pointer').attr('opacity', d => f.age === 'all' || f.age === d.k ? 1 : .35)
-    .on('click', (e, d) => toggle('age', d.k)).on('mousemove', (e, d) => show(e, `<b>${d.label}</b><br>${fmt(d.v)} hospitalisations (${pct(d.v / tot)})`)).on('mouseleave', hide);
+  const b = g.selectAll('g.b').data(data).join('g').attr('class', 'b').style('cursor','pointer').attr('opacity', d => f.age === 'all' || f.age === d.k ? 1 : .35)
+    .on('click', (e, d) => toggle('age',d.k)).on('mousemove', (e, d) => show(e, `<b>${d.label}</b><br>${fmt(d.v)} recorded cases (${pct(d.v / tot)})`)).on('mouseleave', hide);
   b.append('rect').attr('x', d => x(d.k)).attr('y', d => y(d.v)).attr('width', x.bandwidth()).attr('height', d => y(0) - y(d.v)).attr('rx', 3).attr('fill', C.navy);
   b.append('text').attr('x', d => x(d.k) + x.bandwidth() / 2).attr('y', d => y(d.v) - 8).attr('text-anchor', 'middle').attr('font-size', 12).attr('font-weight', 700).attr('fill', C.ink).text(d => fmt(d.v));
   b.append('text').attr('x', d => x(d.k) + x.bandwidth() / 2).attr('y', H - 14).attr('text-anchor', 'middle').attr('font-size', 12).attr('fill', C.muted).text(d => d.label);
@@ -151,10 +167,11 @@ function render() {
   if (!rows.length) return;
   const active = KEYS.filter(k => f[k] !== 'all');
   const count = document.getElementById('filterCount');
-  if (count) count.textContent = active.length ? `${active.length} active filter${active.length === 1 ? '' : 's'} · ${fmt(pick().length)} rows` : `All data · ${fmt(rows.length)} rows`;
+  if (count) count.textContent = active.length ? `${active.length} active filter${active.length === 1 ? '' : 's'} · ${fmt(pick().length)} rows` : `Selection · ${fmt(pick().length)} national rows`;
   kpis(); trend(); months();
-  hbar('#users', agg('user'), 'user', (d, i) => SHADES[Math.min(i, 4)], 'Hospitalisations by road user');
+  hbar('#users', agg('user'), 'user', (d, i) => SHADES[Math.min(i, 4)], 'Recorded cases by road user');
   ages();
+  states();
   document.dispatchEvent(new CustomEvent('visiroad-data-update', { detail: { rows: pick(), year: f.year, remote: f.remote } }));
 }
 
@@ -166,29 +183,21 @@ document.addEventListener('dashboard-theme-change', () => {
   render();
 });
 
-// Export only the rows matching the five dashboard filters.
-document.getElementById('exportCSV')?.addEventListener('click', () => {
-  if (!rows.length) return;
-  const columns = ['year','month','remote','user','sex','age','n'];
-  const headers = ['Calendar year','Month','ABS remoteness area','Road user','Sex','Age group','Hospitalisations'];
-  const csv = [headers, ...pick().map(r => columns.map(k => r[k] ?? ''))]
-    .map(fields => fields.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\r\n');
-  const url = URL.createObjectURL(new Blob(['\uFEFF',csv], {type:'text/csv;charset=utf-8;'}));
-  const anchor = document.createElement('a');
-  anchor.href = url; anchor.download = 'road-injuries-filtered.csv';
-  document.body.appendChild(anchor); anchor.click(); anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-});
+// Separate exports retain the source schema without combining overlapping totals.
+function exportRows(selected,filename){
+ const csv=d3.csvFormat(selected.map(r=>r.raw),Data.COLUMNS);
+ const url=URL.createObjectURL(new Blob(['\uFEFF',csv],{type:'text/csv;charset=utf-8;'}));
+ const anchor=document.createElement('a');anchor.href=url;anchor.download=filename;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+document.getElementById('exportCSV')?.addEventListener('click',()=>{if(rows.length)exportRows(pick(),'visiroad-national-filtered.csv');});
+document.getElementById('exportStates')?.addEventListener('click',()=>{if(rows.length)exportRows(stateRows(),'visiroad-state-totals.csv');});
 
-d3.csv('data/CSVG6.csv', d => ({ year: +d['Calendar year'], month: d.Month, remote: d['ABS remoteness area'], age: d['Age group'], sex: d.Sex, user: d['Road user'], n: +d.Hospitalisations }))
-  .then(data => {
-    rows = data; buildFilters(); render();
-    $('#statusIndicator').className = 'status-indicator success';
-    $('#statusText').textContent = `Data loaded (${fmt(rows.length)} rows)`;
-  })
-  .catch(err => {
-    console.error(err);
-    $('#statusIndicator').className = 'status-indicator';
-    $('#statusText').textContent = 'Could not load data/CSVG6.csv. Open the page through a local server (e.g. VS Code Live Server).';
-  });
+d3.csv('data/FinalG6.csv').then(raw=>{
+ const missing=Data.COLUMNS.filter(c=>!raw.columns.includes(c));
+ if(missing.length)throw new Error('Missing merged CSV columns: '+missing.join(', '));
+ rows=raw.filter(r=>r['Cause of injury']==='Traffic').map(Data.parse);
+ buildFilters();render();
+ $('#statusIndicator').className='status-indicator success';
+ $('#statusText').textContent=`Merged data loaded (${fmt(rows.length)} rows)`;
+}).catch(err=>{console.error(err);$('#statusText').textContent='Could not load merged data: '+err.message;$('#statusIndicator').className='status-indicator';});
 })();

@@ -1,6 +1,6 @@
 // VisiRoad remoteness-area choropleth.
 // Boundaries: ABS ASGS 2021 Remoteness Areas (official public FeatureServer).
-// Counts: filtered nationwide totals from CSVG6.csv; NOT regional per-polygon counts.
+// Counts: filtered nationwide totals from FinalG6.csv; NOT regional per-polygon counts.
 document.addEventListener('DOMContentLoaded', () => {
   const colors = { 'Major Cities':'#087D83', 'Regional':'#F29B56', 'Remote':'#56B4AE', 'Missing':'#92A6AE' };
   const categories = ['Major Cities', 'Regional', 'Remote', 'Missing'];
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function tooltipText(c, properties) {
     const absName = String(properties.ra_name21 || properties.RA_NAME21 || c || 'Area');
     const total = totals[c] || 0;
-    return `<strong>${absName}</strong><br>${c || 'Other territory'}<br>${format(total)} hospitalisations in selected data <br><small>Australia-wide ${c || ''} total, not a count for this polygon</small>`;
+    return `<strong>${absName}</strong><br>${c || 'Other territory'}<br>${format(total)} recorded cases in selected data <br><small>Australia-wide ${c || ''} total, not a count for this polygon</small>`;
   }
   function redraw() {
     if (!regionLayer) return;
@@ -105,9 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedRemote = e.detail.remote;
     const total = Object.values(totals).reduce((a,b) => a+b,0);
     const percent = n => total ? `${Math.round(n/total*100)}%` : '0%';
-    document.getElementById('mapYearLabel').textContent = `${e.detail.year === 'all' ? 'All years (2011–2021)' : e.detail.year} · ${format(total)} hospitalisations`;
+    document.getElementById('mapYearLabel').textContent = `${e.detail.year === 'all' ? 'All years (2011–2021)' : e.detail.year} · ${format(total)} recorded cases`;
     document.getElementById('mapLegend').innerHTML = categories.map(c => `<div class="legend-row"><span class="legend-swatch" style="background:${colors[c]}"></span><span>${c==='Missing'?'Not stated':c}: <strong>${format(totals[c])}</strong> · ${percent(totals[c])}</span></div>`).join('');
-    document.getElementById('remotenessStats').innerHTML = categories.map(c => `<div class="remote-stat-card"><div class="remote-stat-title">${c==='Missing'?'Not stated':c}</div><div class="remote-stat-val">${format(totals[c])}</div><div class="remote-stat-caption">${percent(totals[c])} of selected hospitalisations</div></div>`).join('');
+    document.getElementById('remotenessStats').innerHTML = categories.map(c => `<div class="remote-stat-card"><div class="remote-stat-title">${c==='Missing'?'Not stated':c}</div><div class="remote-stat-val">${format(totals[c])}</div><div class="remote-stat-caption">${percent(totals[c])} of selected recorded cases</div></div>`).join('');
     redraw();
   });
 });
